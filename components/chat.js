@@ -2,13 +2,12 @@ import React from "react"
 import { useUserContext } from "../contexts/userContext"
 import { Login } from "./login"
 import { ChatMessage } from "./chatMessage"
-import * as SEA from 'gun/sea'
 import * as Gun from "gun"
 
 export const Chat = () => {
     const { user, username } = useUserContext()
-    const [db, setDb] = React.useState(Gun())
-    const [newMessage, setNewMessage] = React.useState(null)
+    const db = React.useRef(Gun()).current
+    const [newMessage, setNewMessage] = React.useState('')
     const [messages, setMessages] = React.useState([])
     const [lastScrollTop, setLastScrollTop] = React.useState()
     const [canAutoScroll, setCanAutoScroll] = React.useState(true)
@@ -24,7 +23,7 @@ export const Chat = () => {
 
     React.useEffect(() => {
         // Get Messages
-        db.get('chat')
+        db.get('tristonsChat')
             .map(match)
             .once(async (data, id) => {
                 if (data) {
@@ -36,6 +35,7 @@ export const Chat = () => {
                         what: (await Gun.SEA.decrypt(data.what, key)) + '', // force decrypt as text.
                         when: Gun.state.is(data, 'what'), // get the internal timestamp for the what property.
                     };
+                    console.log("Got a message: ", message)
                     if (message.what) {
                         setMessages((messages) => [...messages.slice(-100), message].sort((a, b) => a.when - b.when))
                         if (canAutoScroll) {
@@ -49,6 +49,7 @@ export const Chat = () => {
     }, [])
 
     const autoScroll = () => {
+        if (!scrollBottom?.current) return;
         setTimeout(() => scrollBottom?.current.scrollIntoView({ behavior: 'auto' }), 500);
         unreadMessages = false;
     }
@@ -64,7 +65,7 @@ export const Chat = () => {
         const secret = await SEA.encrypt(newMessage, '#foo');
         const message = user.get('all').set({ what: secret });
         const index = new Date().toISOString();
-        db.get('chat').get(index).put(message);
+        db.get('tristonsChat').get(index).put(message);
         setNewMessage('');
         setCanAutoScroll(true);
         autoScroll();

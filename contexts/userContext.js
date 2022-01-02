@@ -1,11 +1,13 @@
 import React, { createContext, useContext } from 'react';
-import * as GUN from 'gun';
+import * as Gun from 'gun';
+import 'gun/sea';
+import 'gun/axe';
 
 const UserContext = createContext();
 
 export function UserContextProvider({ children }) {
-    const [db, setDb] = React.useState(GUN())
-    const [user, setUser] = React.useState(db.user().recall({ sessionStorage: true }))
+    const db = React.useRef(Gun()).current
+    const user = React.useRef(db.user().recall({ sessionStorage: true })).current
     const [username, setUsername] = React.useState('')
 
     React.useEffect(() => {
@@ -20,9 +22,7 @@ export function UserContextProvider({ children }) {
 
     let sharedState = {
         db,
-        setDb,
         user,
-        setUser,
         username,
         setUsername
     }
